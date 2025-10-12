@@ -1,2 +1,4 @@
-gdrive/service_account.json
+
+# Always ignore the service_account.json wherever it shows up
+*service_account.json
 output*
