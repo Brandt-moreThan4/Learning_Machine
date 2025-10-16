@@ -17,6 +17,7 @@ def clean_emails():
         # Read the file with UTF-8 encoding to handle special characters
         with open(raw_email_file, "r", encoding="utf-8", errors="replace") as f:
             raw_html = f.read()
+            
         # Clean the html
         soup = BeautifulSoup(raw_html, "html.parser")
 
