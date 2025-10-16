@@ -14,6 +14,7 @@ from googleapiclient.http import MediaIoBaseDownload
 import re
 from pathlib import Path
 import datetime
+import constants
 
 
 class GoogleDriveReader:
@@ -22,7 +23,7 @@ class GoogleDriveReader:
     # Scopes required for Google Drive access
     SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
     
-    def __init__(self, service_account_file: str = 'service_account.json', output_folder: str = 'output'):
+    def __init__(self, service_account_file: str = 'service_account.json', output_folder: Path = constants.RAW_EMAIL_DATA_DIR):
         """
         Initialize the Google Drive reader.
         
@@ -423,7 +424,7 @@ def main():
     
     # Get HTML files and save them to output folder
     print("\n🔍 Searching for HTML files...")
-    html_files = reader.get_html_files(max_files=10, save_files=True)  # Limit to 10 for demo
+    html_files = reader.get_html_files(max_files=20, save_files=True)  # Limit to 10 for demo
     
     if not html_files:
         print("No HTML files found.")
