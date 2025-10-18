@@ -1,6 +1,8 @@
 import Email_Download.email_download as ed
 from quiz_create import clean_emails as ce
+import utils
 
+utils.create_necessary_dirs()
 
 def main():
 
