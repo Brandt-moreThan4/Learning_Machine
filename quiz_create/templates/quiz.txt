@@ -1,0 +1,20 @@
+Quiz generated from: {{ quiz.input_file.name }}
+{{ "=" * 50 }}
+
+{% for question in quiz.questions %}
+Question {{ loop.index }}: {{ question.question }}
+Difficulty: {{ question.difficulty }}
+
+{% if question.__class__.__name__ == 'MCQQuestion' %}
+Options:
+{% for option in question.shuffled_options %}
+  {{ loop.index }}. {{ option }}
+{% endfor %}
+{% else %}
+Answer: {{ question.answer }}
+{% endif %}
+
+Justification: {{ question.justification_span }}
+{{ "-" * 30 }}
+
+{% endfor %}

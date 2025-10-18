@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Quiz: {{ quiz.input_file.stem }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f4f4f4; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .question { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .difficulty { color: #666; font-style: italic; }
+        .options { margin: 10px 0; }
+        .options li { margin: 5px 0; }
+        .answer { background-color: #e8f5e8; padding: 10px; border-radius: 3px; margin: 10px 0; }
+        .justification { background-color: #f0f8ff; padding: 10px; border-radius: 3px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class='header'>
+        <h1>Quiz: {{ quiz.input_file.stem }}</h1>
+        <p><em>Generated from: {{ quiz.input_file.name }}</em></p>
+    </div>
+    
+    {% for question in quiz.questions %}
+    <div class='question'>
+        <h2>Question {{ loop.index }}</h2>
+        <p class='difficulty'>Difficulty: {{ question.difficulty.title() }}</p>
+        <p>{{ question.question }}</p>
+        
+        {% if question.__class__.__name__ == 'MCQQuestion' %}
+        <div class='options'>
+            <p><strong>Options:</strong></p>
+            <ol>
+                {% for option in question.shuffled_options %}
+                <li>{{ option }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% else %}
+        <div class='answer'>
+            <p><strong>Answer:</strong> {{ question.answer }}</p>
+        </div>
+        {% endif %}
+        
+        <div class='justification'>
+            <p><strong>Justification:</strong> {{ question.justification_span }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

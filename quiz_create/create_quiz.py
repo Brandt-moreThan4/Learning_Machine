@@ -2,6 +2,7 @@ import constants
 from pathlib import Path
 import json
 import random
+from jinja2 import Environment, FileSystemLoader, Template
 
 import quiz_create.generators.prompts as prompts
 import quiz_create.generators.local_llm as local_llm
@@ -13,11 +14,23 @@ class Question:
         self.answer = answer
         self.justification_span = justification_span
         self.difficulty = difficulty
+    
+    @property
+    def shuffled_options(self):
+        """Return shuffled options for MCQ questions, empty list for others"""
+        return []
 
 class MCQQuestion(Question):
     def __init__(self, question: str, answer: str, justification_span: str, difficulty: str, distractors: list):
         super().__init__(question, answer, justification_span, difficulty)
         self.distractors = distractors
+    
+    @property
+    def shuffled_options(self):
+        """Return shuffled options for MCQ questions"""
+        all_options = [self.answer] + self.distractors
+        random.shuffle(all_options)
+        return all_options
 
 class ClozeQuestion(Question):
     def __init__(self, question: str, answer: str, justification_span: str, difficulty: str):
@@ -36,6 +49,15 @@ class Quiz:
     def __init__(self, questions: list, input_file: Path):
         self.questions = questions
         self.input_file = input_file
+        self._template_env = None
+    
+    @property
+    def template_env(self):
+        """Lazy-load Jinja2 environment"""
+        if self._template_env is None:
+            template_dir = Path(__file__).parent / "templates"
+            self._template_env = Environment(loader=FileSystemLoader(template_dir))
+        return self._template_env
     
     @classmethod
     def from_quiz_data_dict(cls, quiz_data: dict, input_file: Path):
@@ -87,126 +109,19 @@ class Quiz:
         return cls(questions, input_file)
     
     def as_txt(self) -> str:
-        """Convert quiz to text format"""
-        lines = []
-        lines.append(f"Quiz generated from: {self.input_file.name}")
-        lines.append("=" * 50)
-        lines.append("")
-        
-        for i, question in enumerate(self.questions, 1):
-            lines.append(f"Question {i}: {question.question}")
-            lines.append(f"Difficulty: {question.difficulty}")
-            lines.append("")
-            
-            if isinstance(question, MCQQuestion):
-                lines.append("Options:")
-                all_options = [question.answer] + question.distractors
-                # Shuffle options for better quiz experience
-                random.shuffle(all_options)
-                for j, option in enumerate(all_options, 1):
-                    lines.append(f"  {j}. {option}")
-            else:
-                lines.append(f"Answer: {question.answer}")
-            
-            lines.append("")
-            lines.append(f"Justification: {question.justification_span}")
-            lines.append("-" * 30)
-            lines.append("")
-        
-        return "\n".join(lines)
+        """Convert quiz to text format using template"""
+        template = self.template_env.get_template('quiz.txt')
+        return template.render(quiz=self)
     
     def as_markdown(self) -> str:
-        """Convert quiz to markdown format"""
-        lines = []
-        lines.append(f"# Quiz: {self.input_file.stem}")
-        lines.append("")
-        lines.append(f"*Generated from: {self.input_file.name}*")
-        lines.append("")
-        
-        for i, question in enumerate(self.questions, 1):
-            lines.append(f"## Question {i}")
-            lines.append("")
-            lines.append(f"**Difficulty:** {question.difficulty.title()}")
-            lines.append("")
-            lines.append(f"{question.question}")
-            lines.append("")
-            
-            if isinstance(question, MCQQuestion):
-                lines.append("**Options:**")
-                lines.append("")
-                all_options = [question.answer] + question.distractors
-                # Shuffle options for better quiz experience
-                random.shuffle(all_options)
-                for j, option in enumerate(all_options, 1):
-                    lines.append(f"{j}. {option}")
-            else:
-                lines.append(f"**Answer:** {question.answer}")
-            
-            lines.append("")
-            lines.append(f"**Justification:** {question.justification_span}")
-            lines.append("")
-            lines.append("---")
-            lines.append("")
-        
-        return "\n".join(lines)
+        """Convert quiz to markdown format using template"""
+        template = self.template_env.get_template('quiz.md')
+        return template.render(quiz=self)
     
     def as_html(self) -> str:
-        """Convert quiz to HTML format"""
-        html_lines = []
-        html_lines.append("<!DOCTYPE html>")
-        html_lines.append("<html lang='en'>")
-        html_lines.append("<head>")
-        html_lines.append("    <meta charset='UTF-8'>")
-        html_lines.append("    <meta name='viewport' content='width=device-width, initial-scale=1.0'>")
-        html_lines.append(f"    <title>Quiz: {self.input_file.stem}</title>")
-        html_lines.append("    <style>")
-        html_lines.append("        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }")
-        html_lines.append("        .header { background-color: #f4f4f4; padding: 20px; border-radius: 5px; margin-bottom: 20px; }")
-        html_lines.append("        .question { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }")
-        html_lines.append("        .difficulty { color: #666; font-style: italic; }")
-        html_lines.append("        .options { margin: 10px 0; }")
-        html_lines.append("        .options li { margin: 5px 0; }")
-        html_lines.append("        .answer { background-color: #e8f5e8; padding: 10px; border-radius: 3px; margin: 10px 0; }")
-        html_lines.append("        .justification { background-color: #f0f8ff; padding: 10px; border-radius: 3px; margin: 10px 0; }")
-        html_lines.append("    </style>")
-        html_lines.append("</head>")
-        html_lines.append("<body>")
-        html_lines.append(f"    <div class='header'>")
-        html_lines.append(f"        <h1>Quiz: {self.input_file.stem}</h1>")
-        html_lines.append(f"        <p><em>Generated from: {self.input_file.name}</em></p>")
-        html_lines.append("    </div>")
-        
-        for i, question in enumerate(self.questions, 1):
-            html_lines.append(f"    <div class='question'>")
-            html_lines.append(f"        <h2>Question {i}</h2>")
-            html_lines.append(f"        <p class='difficulty'>Difficulty: {question.difficulty.title()}</p>")
-            html_lines.append(f"        <p>{question.question}</p>")
-            
-            if isinstance(question, MCQQuestion):
-                html_lines.append("        <div class='options'>")
-                html_lines.append("            <p><strong>Options:</strong></p>")
-                html_lines.append("            <ol>")
-                all_options = [question.answer] + question.distractors
-                # Shuffle options for better quiz experience
-                random.shuffle(all_options)
-                for option in all_options:
-                    html_lines.append(f"                <li>{option}</li>")
-                html_lines.append("            </ol>")
-                html_lines.append("        </div>")
-            else:
-                html_lines.append(f"        <div class='answer'>")
-                html_lines.append(f"            <p><strong>Answer:</strong> {question.answer}</p>")
-                html_lines.append("        </div>")
-            
-            html_lines.append(f"        <div class='justification'>")
-            html_lines.append(f"            <p><strong>Justification:</strong> {question.justification_span}</p>")
-            html_lines.append("        </div>")
-            html_lines.append("    </div>")
-        
-        html_lines.append("</body>")
-        html_lines.append("</html>")
-        
-        return "\n".join(html_lines)
+        """Convert quiz to HTML format using template"""
+        template = self.template_env.get_template('quiz.html')
+        return template.render(quiz=self)
     
     def save_txt(self):
         """Save quiz to text file"""
@@ -258,22 +173,18 @@ class Quiz:
             format_type: Format to save in ("html", "markdown", "txt")
         """
         format_type = format_type.lower()
-
-        self.save_html()
-        self.save_markdown()
-        self.save_txt()
         
-        # if format_type == "html":
-        #     return self.save_html()
-        # elif format_type == "markdown":
-        #     return self.save_markdown()
-        # elif format_type == "txt":
-        #     return self.save_txt()
-        # else:
-        #     print(f"Unknown format '{format_type}', defaulting to HTML")
-        #     return self.save_html()
-
+        if format_type == "html":
+            return self.save_html()
+        elif format_type == "markdown":
+            return self.save_markdown()
+        elif format_type == "txt":
+            return self.save_txt()
+        else:
+            print(f"Unknown format '{format_type}', defaulting to HTML")
+            return self.save_html()
     
+
 
 def create_quiz(file_path: Path) -> Quiz:
     """
