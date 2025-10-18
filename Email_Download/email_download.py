@@ -29,6 +29,9 @@ class EmailDownloader:
         
         # Create output folder if it doesn't exist
         self.output_folder.mkdir(exist_ok=True)
+
+        # Autho-authenticate on initialization
+        self.authenticate() 
     
     def authenticate(self):
         """Authenticate with Google Drive API."""
@@ -44,7 +47,7 @@ class EmailDownloader:
             return True
         except Exception as e:
             print(f"Authentication failed: {e}")
-            return False
+            raise e
     
     def download_files(self, max_files=50):
         """Download HTML files and save with original names."""

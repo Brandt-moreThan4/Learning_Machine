@@ -6,7 +6,6 @@ import json
 
 # To Do
 # Save as json with metadata
-# Add word counts
 # Strip out footers?
 # Store only unique id as file name?
 
@@ -30,8 +29,6 @@ def clean_emails():
         data['subject'] = file_meta_data[2]
         data['word'] = len(cleaned_text.split())
         data['email_content'] = cleaned_text
-
-
 
         new_file_path = raw_email_file.name.replace(".html", ".json")
 
