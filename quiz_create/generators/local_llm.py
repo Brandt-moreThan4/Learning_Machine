@@ -1,4 +1,8 @@
 import json
+import ollama
+import time
+
+
 
 
 MOCK_QUIZ_DATA = {
@@ -40,3 +44,21 @@ def create_quiz_data(input_text: str, prompt: str) -> dict:
 
         
     return MOCK_QUIZ_DATA
+
+
+
+
+if __name__ == "__main__":
+    prompt = "Tell me the nights watch oath and explain any historical parallels it might have."
+
+
+    start_time = time.time()
+    response = ollama.generate(
+        model='llama3.1',
+        prompt=prompt
+    )
+    end_time = time.time()
+    
+    print(f"Generation took {end_time - start_time:.2f} seconds")
+    print(response['response'])
+    print('Done!')
