@@ -6,6 +6,7 @@ from jinja2 import Environment, FileSystemLoader, Template
 
 import quiz_create.generators.prompts as prompts
 import quiz_create.generators.local_llm as local_llm
+import quiz_create.generators.open_ai as open_ai
 
 
 class Question:
