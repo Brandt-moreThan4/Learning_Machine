@@ -10,5 +10,6 @@ def delete_files_in_directory(directory: Path):
 
 if __name__ == "__main__":
     pass
-    delete_files_in_directory(constants.RAW_EMAIL_DATA_DIR)
-    delete_files_in_directory(constants.CLEANED_EMAIL_DATA_DIR)
+    # delete_files_in_directory(constants.RAW_EMAIL_DATA_DIR)
+    # delete_files_in_directory(constants.CLEANED_EMAIL_DATA_DIR)
+    delete_files_in_directory(constants.QUIZ_OUTPUT_DIR)

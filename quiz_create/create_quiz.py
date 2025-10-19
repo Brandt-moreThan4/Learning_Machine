@@ -52,6 +52,14 @@ class Quiz:
         self._template_env = None
     
     @property
+    def num_questions(self):
+        return len(self.questions)
+    
+    @property
+    def empty(self):
+        return self.num_questions == 0
+
+    @property
     def template_env(self):
         """Lazy-load Jinja2 environment"""
         if self._template_env is None:
@@ -60,9 +68,9 @@ class Quiz:
         return self._template_env
     
     @classmethod
-    def from_quiz_data_dict(cls, quiz_data: dict, input_file: Path):
+    def from_quiz_data_dict(cls, quiz_data, input_file: Path):
         questions = []
-        for q_data in quiz_data.get('questions', []):
+        for q_data in quiz_data:
             question_type = q_data.get('kind', '').lower()
             
             if question_type == 'mcq':
@@ -204,11 +212,13 @@ def create_quiz(file_path: Path) -> Quiz:
     prompt = prompts.DEFAULT_PROMPT.format(source=source_text, n=5)
 
     # Call the generator with the prompt to get questions
-    quiz_data = local_llm.create_quiz_data(source_text, prompt)
+    quiz_data = local_llm.create_quiz_data(prompt)
 
     # Process the quiz_data to create Quiz and Question objects
-    quiz = Quiz.from_quiz_data_dict(quiz_data, file_path)
-
+    if quiz_data is not None:
+        quiz = Quiz.from_quiz_data_dict(quiz_data, file_path)
+    else:
+        quiz = Quiz([], file_path)  # Return empty quiz on failure
     return quiz
 
 
@@ -219,10 +229,10 @@ if __name__ == "__main__":
     
     # Display quiz content
     print("Generated Quiz:")
-    print(quiz.as_txt())
     
     # Save quiz to file (defaults to HTML)
-    quiz.save()
+    if quiz is not None:
+        quiz.save()
     
     # Example of saving in different formats:
     # quiz.save("markdown")  # Save as markdown

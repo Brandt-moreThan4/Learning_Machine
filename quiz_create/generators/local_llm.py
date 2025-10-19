@@ -1,7 +1,7 @@
 import json
 import ollama
 import time
-
+import logging
 
 
 
@@ -34,16 +34,24 @@ MOCK_QUIZ_DATA = {
     ]
 }
 
-def create_quiz_data(input_text: str, prompt: str) -> dict:
+def create_quiz_data(prompt: str) -> dict:
     """
-    Create quiz data from input text using the provided prompt.
-    This is a placeholder implementation that returns mock data.
-    In a real implementation, this would call a local LLM.
-    """
-    # Mock implementation - replace with actual LLM call
 
-        
-    return MOCK_QUIZ_DATA
+    """
+    logging.info("Generating quiz data using local LLM...")
+    response = ollama.generate(
+        model='llama3.1',
+        prompt=prompt
+    )
+    quiz_data_str = response['response']
+    try:
+        quiz_data = json.loads(quiz_data_str)
+    except json.JSONDecodeError:
+        logging.error(f"Failed to parse quiz data from LLM response. Response was:\n\n {quiz_data_str}")
+        quiz_data = None
+    return quiz_data
+
+
 
 
 
