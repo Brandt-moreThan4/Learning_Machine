@@ -13,6 +13,9 @@
         .options li { margin: 5px 0; }
         .answer { background-color: #e8f5e8; padding: 10px; border-radius: 3px; margin: 10px 0; }
         .justification { background-color: #f0f8ff; padding: 10px; border-radius: 3px; margin: 10px 0; }
+        .answers-section { margin-top: 40px; padding: 20px; background-color: #f9f9f9; border-radius: 5px; }
+        .answer-item { margin-bottom: 20px; padding: 15px; background-color: white; border-radius: 3px; border-left: 4px solid #007acc; }
+        .answer-item h3 { margin-top: 0; color: #007acc; }
     </style>
 </head>
 <body>
@@ -24,7 +27,6 @@
     {% for question in quiz.questions %}
     <div class='question'>
         <h2>Question {{ loop.index }}</h2>
-        <p class='difficulty'>Difficulty: {{ question.difficulty.title() }}</p>
         <p>{{ question.question }}</p>
         
         {% if question.__class__.__name__ == 'MCQQuestion' %}
@@ -36,16 +38,21 @@
                 {% endfor %}
             </ol>
         </div>
-        {% else %}
-        <div class='answer'>
-            <p><strong>Answer:</strong> {{ question.answer }}</p>
-        </div>
         {% endif %}
-        
-        <div class='justification'>
-            <p><strong>Justification:</strong> {{ question.justification_span }}</p>
-        </div>
     </div>
     {% endfor %}
+    
+    <div class='answers-section'>
+        <h2>Answers</h2>
+        {% for question in quiz.questions %}
+        <div class='answer-item'>
+            <h3>Question {{ loop.index }}</h3>
+            <p><strong>Question:</strong> {{ question.question }}</p>
+            <p><strong>Answer:</strong> {{ question.answer }}</p>
+            <p><strong>Difficulty:</strong> {{ question.difficulty.title() }}</p>
+            <p><strong>Justification:</strong> {{ question.justification_span }}</p>
+        </div>
+        {% endfor %}
+    </div>
 </body>
 </html>
