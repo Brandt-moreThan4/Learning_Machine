@@ -126,8 +126,8 @@ if __name__ == "__main__":
     if quiz is not None:
         quiz.save()
     
-    # quizzes = create_and_save_quizzes_from_directory(constants.CLEANED_EMAIL_DATA_DIR, 
-    #     max_quizzes=5,
-    #  generator_type="openai")
+    quizzes = create_and_save_quizzes_from_directory(constants.CLEANED_EMAIL_DATA_DIR, 
+        max_quizzes=5,
+     generator_type="openai")
 
     default_logger.info('Done')
