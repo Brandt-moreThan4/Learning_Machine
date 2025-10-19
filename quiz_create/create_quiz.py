@@ -1,12 +1,13 @@
 import constants
 from pathlib import Path
 import json
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from quiz_create.models import Quiz
 from quiz_create.generators import LocalLLMGenerator, OpenAIGenerator
 from quiz_create.generators import prompts
 from logging_config import default_logger
+
 
 
 def create_quiz(
@@ -51,28 +52,82 @@ def create_quiz(
     return quiz
 
 
+def create_quizzes_from_files(
+    file_paths: List[Path], 
+    generator_type: str = "local_llm",
+    generator: Optional[Union[LocalLLMGenerator, OpenAIGenerator]] = None
+) -> List[Quiz]:
+    """
+    Create quizzes from a list of file paths.
+    
+    Args:
+        file_paths: List of file paths to create quizzes from
+        generator_type: Type of generator to use ("local_llm" or "openai")
+        generator: Optional pre-configured generator instance
+        
+    Returns:
+        List of Quiz objects
+    """
+    return [create_quiz(file_path, generator_type, generator) for file_path in file_paths]
+
+def create_and_save_quizzes(
+    file_paths: List[Path], 
+    generator_type: str = "local_llm",
+    generator: Optional[Union[LocalLLMGenerator, OpenAIGenerator]] = None
+) -> List[Quiz]:
+    """
+    Create and save quizzes from a list of file paths.
+    
+    Args:
+        file_paths: List of file paths to create quizzes from
+        generator_type: Type of generator to use ("local_llm" or "openai")
+        generator: Optional pre-configured generator instance
+        
+    Returns:
+        List of Quiz objects
+    """
+    return [create_quiz(file_path, generator_type, generator).save() for file_path in file_paths]
+
+
+def create_and_save_quizzes_from_directory(
+    directory_path: Path, 
+    max_quizzes: int = 5,
+    generator_type: str = "local_llm",
+    generator: Optional[Union[LocalLLMGenerator, OpenAIGenerator]] = None
+) -> List[Quiz]:
+    """
+    Create and save quizzes from a directory of files.
+    
+    Args:
+        directory_path: Path to the directory to create quizzes from
+        max_quizzes: Maximum number of quizzes to create
+        generator_type: Type of generator to use ("local_llm" or "openai")
+        generator: Optional pre-configured generator instance
+        
+    Returns:
+        List of Quiz objects
+    """
+    quizzes = []
+    for file_path in directory_path.glob("*.json"):
+        quiz = create_quiz(file_path, generator_type, generator)
+        quizzes.append(quiz)
+        if len(quizzes) >= max_quizzes:
+            break
+    for quiz in quizzes:
+        quiz.save()
+    return quizzes
+
+
 if __name__ == "__main__":
     test_file = constants.CLEANED_EMAIL_DATA_DIR / "Morning_Brew__2025-10-16___In_a_jam__199ec791b7c1dd7b.json"
 
-    # Example using local LLM (default)
     quiz = create_quiz(test_file, generator_type="openai")
-    
-    # Example using OpenAI
-    # quiz = create_quiz(test_file, generator_type="openai")
-    
-    # Example using custom generator
-    # custom_generator = LocalLLMGenerator(model="llama3.1")
-    # quiz = create_quiz(test_file, generator=custom_generator)
-    
-    # Display quiz content
-    default_logger.info("Generated Quiz:")
-    
     # Save quiz to file (defaults to HTML)
     if quiz is not None:
         quiz.save()
     
-    # Example of saving in different formats:
-    # quiz.save("markdown")  # Save as markdown
-    # quiz.save("txt")      # Save as text
-    # quiz.save("html")     # Save as HTML (default)
+    # quizzes = create_and_save_quizzes_from_directory(constants.CLEANED_EMAIL_DATA_DIR, 
+    #     max_quizzes=5,
+    #  generator_type="openai")
+
     default_logger.info('Done')
