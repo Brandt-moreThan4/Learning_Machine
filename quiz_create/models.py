@@ -156,48 +156,13 @@ class Quiz:
         
         return cls(questions, input_file)
     
-    def as_txt(self) -> str:
-        """Convert quiz to text format using template."""
-        template = self.template_env.get_template('quiz.txt')
-        return template.render(quiz=self)
     
-    def as_markdown(self) -> str:
-        """Convert quiz to markdown format using template."""
-        template = self.template_env.get_template('quiz.md')
-        return template.render(quiz=self)
     
     def as_html(self) -> str:
         """Convert quiz to HTML format using template."""
         template = self.template_env.get_template('quiz.html')
         return template.render(quiz=self)
     
-    def save_txt(self) -> Path:
-        """Save quiz to text file."""
-        import constants
-        constants.QUIZ_OUTPUT_DIR.mkdir(exist_ok=True)
-        
-        input_stem = self.input_file.stem
-        output_file = constants.QUIZ_OUTPUT_DIR / f"{input_stem}_quiz.txt"
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(self.as_txt())
-        
-        print(f"Quiz saved to: {output_file}")
-        return output_file
-    
-    def save_markdown(self) -> Path:
-        """Save quiz to markdown file."""
-        import constants
-        constants.QUIZ_OUTPUT_DIR.mkdir(exist_ok=True)
-        
-        input_stem = self.input_file.stem
-        output_file = constants.QUIZ_OUTPUT_DIR / f"{input_stem}_quiz.md"
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(self.as_markdown())
-        
-        print(f"Quiz saved to: {output_file}")
-        return output_file
     
     def save_html(self) -> Path:
         """Save quiz to HTML file."""

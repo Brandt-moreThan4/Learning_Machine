@@ -1,5 +1,6 @@
 
-
+# Later, I would like to make the prompt a bit more customizable. Like perhaps specifying the number of each type of question.
+#
 
 DEFAULT_PROMPT = """You are generating quiz questions strictly from SOURCE.
 Return a JSON list of objects with fields:
