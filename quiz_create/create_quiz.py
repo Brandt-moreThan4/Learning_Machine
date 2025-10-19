@@ -6,6 +6,7 @@ from typing import Optional, Union
 from quiz_create.models import Quiz
 from quiz_create.generators import LocalLLMGenerator, OpenAIGenerator
 from quiz_create.generators import prompts
+from logging_config import default_logger
 
 
 def create_quiz(
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     # quiz = create_quiz(test_file, generator=custom_generator)
     
     # Display quiz content
-    print("Generated Quiz:")
+    default_logger.info("Generated Quiz:")
     
     # Save quiz to file (defaults to HTML)
     if quiz is not None:
@@ -74,4 +75,4 @@ if __name__ == "__main__":
     # quiz.save("markdown")  # Save as markdown
     # quiz.save("txt")      # Save as text
     # quiz.save("html")     # Save as HTML (default)
-    print('Done')
+    default_logger.info('Done')

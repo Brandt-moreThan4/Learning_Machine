@@ -14,6 +14,7 @@ from googleapiclient.http import MediaIoBaseDownload
 
 sys.path.append(str(Path(__file__).parent.parent))
 import constants
+from logging_config import default_logger
 
 
 class EmailDownloader:
@@ -37,22 +38,22 @@ class EmailDownloader:
         """Authenticate with Google Drive API."""
         try:
             if not os.path.exists(self.service_account_file):
-                print(f"Error: {self.service_account_file} not found!")
+                default_logger.error(f"Error: {self.service_account_file} not found!")
                 return False
             
             creds = service_account.Credentials.from_service_account_file(
                 self.service_account_file, scopes=self.SCOPES)
             self.service = build('drive', 'v3', credentials=creds)
-            print("Successfully authenticated!")
+            default_logger.info("Successfully authenticated!")
             return True
         except Exception as e:
-            print(f"Authentication failed: {e}")
+            default_logger.error(f"Authentication failed: {e}")
             raise e
     
     def download_files(self, max_files=50):
         """Download HTML files and save with original names."""
         if not self.service:
-            print("Not authenticated!")
+            default_logger.error("Not authenticated!")
             return
         
         # Search for HTML files
@@ -63,13 +64,13 @@ class EmailDownloader:
         ).execute()
         
         files = results.get('files', [])
-        print(f"Found {len(files)} HTML files")
+        default_logger.info(f"Found {len(files)} HTML files")
         
         for file_info in files:
             file_name = file_info['name']
             file_id = file_info['id']
             
-            print(f"Downloading: {file_name}")
+            default_logger.info(f"Downloading: {file_name}")
             
             # Download file content
             request = self.service.files().get_media(fileId=file_id)
@@ -88,22 +89,22 @@ class EmailDownloader:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             
-            print(f"Saved: {file_path}")
+            default_logger.info(f"Saved: {file_path}")
 
 
 def main():
     """Main function to download emails."""
-    print("Email Downloader")
-    print("=" * 20)
+    default_logger.info("Email Downloader")
+    default_logger.info("=" * 20)
     
     downloader = EmailDownloader()
     
     if not downloader.authenticate():
-        print("Failed to authenticate!")
+        default_logger.error("Failed to authenticate!")
         return
     
     downloader.download_files(max_files=20)
-    print(f"\nFiles saved to: {downloader.output_folder}")
+    default_logger.info(f"\nFiles saved to: {downloader.output_folder}")
 
 
 if __name__ == "__main__":

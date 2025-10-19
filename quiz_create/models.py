@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Literal
 from pathlib import Path
 import random
+from logging_config import default_logger
 
 
 class Question(ABC):
@@ -144,7 +145,7 @@ class Quiz:
                 )
             else:
                 # Default to short answer if type is unknown
-                print('WARNING: UNKNOWN QUESTION TYPE, DEFAULTING TO SHORT ANSWER')
+                default_logger.warning('UNKNOWN QUESTION TYPE, DEFAULTING TO SHORT ANSWER')
                 question = ShortAnswerQuestion(
                     question=q_data['question'],
                     answer=q_data['answer'],
@@ -175,7 +176,7 @@ class Quiz:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(self.as_html())
         
-        print(f"Quiz saved to: {output_file}")
+        default_logger.info(f"Quiz saved to: {output_file}")
         return output_file
     
     def save(self, format_type: str = "html") -> Path:
@@ -194,5 +195,5 @@ class Quiz:
         elif format_type == "txt":
             return self.save_txt()
         else:
-            print(f"Unknown format '{format_type}', defaulting to HTML")
+            default_logger.warning(f"Unknown format '{format_type}', defaulting to HTML")
             return self.save_html()

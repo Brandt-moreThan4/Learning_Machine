@@ -5,6 +5,7 @@ This script demonstrates how to explore your Google Drive folder structure
 and search for files in specific folders.
 """
 
+import logging
 from google_drive_reader import GoogleDriveReader
 
 
