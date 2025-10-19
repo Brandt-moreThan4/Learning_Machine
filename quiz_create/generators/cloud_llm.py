@@ -1,127 +1,53 @@
-
-import logging
-import json
-import time
-from openai import OpenAI
-import os
+import os, logging
+from typing import Literal, List
 from pydantic import BaseModel
-import prompts
+from openai import OpenAI
 
-CHOSEN_OPEN_AI_MODEL = "gpt-4o-mini"
+CHOSEN_OPEN_AI_MODEL = "gpt-4o-mini"  # must support Responses + structured outputs
 
+class Question(BaseModel):
+    kind: Literal["mcq","cloze","tf","short"]
+    question: str
+    answer: str
+    distractors: List[str]  # [] for non-MCQ
+    difficulty: Literal["easy","medium","hard"]
+    answer_justification: str
+
+class QuizData(BaseModel):
+    questions: List[Question]
 
 TOY_PROMPT = """You are generating a quiz.
-Return a JSON list of objects with fields:
+
+Return a JSON object with a single key "questions" whose value is a list of objects with fields:
  - kind (mcq|cloze|tf|short)
  - question
  - answer
- - distractors(3 for mcq else [])
+ - distractors (3 for mcq, otherwise an empty list)
  - difficulty (easy|medium|hard)
- - answer_justification (<=200).
+ - answer_justification (<=200 chars)
 
-<<<
-The quiz content should be about the nights watch from A Song of Ice and Fire.
->>>
-Write 3 questions.
-Return only the Json list. 
+Content: the Night's Watch from A Song of Ice and Fire.
+Write exactly 3 questions.
+Output only JSON for that object.
 """
-
-
-
-class Question(BaseModel):
-    question: str
-    answer: str
-    answer_justification: str
-    difficulty: str
-    distractors: list # Can be empty for non-MCQ questions
-
-class QuizData(BaseModel):
-    questions: list[Question]
-
-
 
 def get_openai_client() -> OpenAI:
     api_key = os.getenv("OPENAI_API_KEY")
-    client = OpenAI(api_key=api_key)
-    return client
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not set")
+    return OpenAI(api_key=api_key)
 
 client = get_openai_client()
 
-def print_available_models():
-    client = get_openai_client()
-    models = client.models.list()
-    for model in models.data:
-        print(model.id)
-
-
-def create_quiz_data_json(prompt:str) -> dict:
-    """
-    Create quiz data using OpenAI's API.
-    
-    Args:
-        prompt: The prompt to send to the LLM.
-        
-    Returns:
-        Parsed JSON quiz data.
-    """
-    logging.info("Generating quiz data using OpenAI LLM...")
-    response = client.chat.completions.create(
+def create_quiz_data(prompt: str) -> QuizData:
+    logging.info("Generating quiz data using OpenAI LLM (Responses API)...")
+    resp = client.responses.parse(
         model=CHOSEN_OPEN_AI_MODEL,
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        response_format={"type": "json_object"},
+        input=prompt,                 # <-- string, not messages
+        text_format=QuizData,         # <-- Pydantic schema
     )
-    quiz_data = response.choices[0].message.content
-
-    try:
-        quiz_data = json.loads(quiz_data)
-    except json.JSONDecodeError:
-        logging.error(f"Failed to parse quiz data from LLM response. Response was:\n\n {quiz_data}")
-        quiz_data = {}
-
-    return quiz_data
-
-
-def create_quiz_data(prompt:str) -> dict:
-    """
-    Create quiz data using OpenAI's API.
-    
-    Args:
-        prompt: The prompt to send to the LLM.
-        
-    Returns:
-        Parsed JSON quiz data.
-    """
-    logging.info("Generating quiz data using OpenAI LLM...")
-    response = client.responses.parse(
-        model=CHOSEN_OPEN_AI_MODEL,
-        input=[
-            {"role": "user", "content": prompt}
-        ],
-        text_format=QuizData,
-    )
-
-    quiz_data = response.output_parsed
-    return quiz_data
-
+    return resp.output_parsed        # <-- a QuizData instance
 
 if __name__ == "__main__":
-    # prompt = "Tell me the nights watch oath and explain any historical parallels it might have."
-    prompt = "Generate a quiz with 5 questions about the history of the Roman Empire. Include multiple choice, true/false, and short answer questions. Provide answers and explanations for each question."
-
-    # print_available_models()
-    response_format={"type": "json_object"},
-    start_time = time.time()
-    # response = client.chat.completions.create(
-    #     model=CHOSEN_OPEN_AI_MODEL,
-    #     messages=[
-    #         {"role": "user", "content": prompts.TOY_PROMPT}
-    #     ],
-    #     response_format={"type": "json_object"},
-    # )
-
     quiz = create_quiz_data(TOY_PROMPT)
-
-    print('Done!')
-
+    print(quiz.model_dump_json(indent=2))
