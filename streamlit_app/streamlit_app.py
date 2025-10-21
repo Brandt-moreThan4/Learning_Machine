@@ -1,9 +1,13 @@
 """
 Streamlit app for viewing Learning Machine quizzes.
 """
+import sys
+from pathlib import Path
+# Add parent directory to Python path to import constants
+sys.path.append(str(Path(__file__).parent.parent))
+
 import streamlit as st
 import constants
-from pathlib import Path
 import json
 import re
 from bs4 import BeautifulSoup
