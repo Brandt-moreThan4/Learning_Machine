@@ -1,4 +1,4 @@
-import Email_Download.email_download as ed
+import email_download.email_download as ed
 from quiz_create import clean_emails as ce
 import utils
 from logging_config import setup_logging, default_logger
