@@ -6,7 +6,11 @@ from typing import List, Literal
 from pathlib import Path
 import random
 from logging_config import default_logger
-
+import json
+from sqlalchemy import text
+from sqlalchemy import text, bindparam
+from sqlalchemy.dialects.postgresql import JSONB
+from db_connect import create_db_connection
 
 class Question(ABC):
     """Base class for all question types."""
@@ -28,7 +32,15 @@ class Question(ABC):
         """Return the question type as a string."""
         return self.__class__.__name__.replace('Question', '').lower()
 
-
+    def as_dict(self) -> dict:
+        return {
+            "kind": self.question_type,
+            "question": self.question,
+            "answer": self.answer,
+            "justification_span": self.justification_span,
+            "difficulty": self.difficulty,
+            "distractors": getattr(self, 'distractors', []),
+        }
 class MCQQuestion(Question):
     """Multiple Choice Question."""
     
@@ -197,3 +209,46 @@ class Quiz:
         else:
             default_logger.warning(f"Unknown format '{format_type}', defaulting to HTML")
             return self.save_html()
+
+    def as_dict(self) -> dict:
+    
+        return {
+            "input_file": str(self.input_file),
+            "num_questions": self.num_questions,
+            "questions": [question.as_dict() for question in self.questions]
+        }
+
+    def upload_to_db(self) -> int:
+        """
+        Upload quiz to database and return the quiz ID.
+        
+        Returns:
+            int: The ID of the uploaded quiz
+            
+        Raises:
+            Exception: If database connection or upload fails
+        """
+
+        
+
+        # Create database connection
+        engine = create_db_connection()
+        
+        # Convert quiz to dictionary format for JSON storage
+        quiz_data = self.as_dict()
+
+
+        with engine.connect() as conn:
+            stmt = text("""
+                INSERT INTO quiz_app.quizzes (data)
+                VALUES (:quiz_data)
+                RETURNING id
+            """).bindparams(bindparam("quiz_data", type_=JSONB))
+
+            result = conn.execute(stmt, {"quiz_data": quiz_data})  # quiz_data is a dict
+            quiz_id = result.scalar_one()
+            conn.commit()        
+
+        
+        default_logger.info(f"Quiz uploaded to database with ID: {quiz_id}")
+        return quiz_id

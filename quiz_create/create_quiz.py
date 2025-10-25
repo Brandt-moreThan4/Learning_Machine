@@ -93,7 +93,8 @@ def create_and_save_quizzes_from_directory(
     directory_path: Path, 
     max_quizzes: int = 5,
     generator_type: str = "local_llm",
-    generator: Optional[Union[LocalLLMGenerator, OpenAIGenerator]] = None
+    generator: Optional[Union[LocalLLMGenerator, OpenAIGenerator]] = None,
+    upload_to_db: bool = False
 ) -> List[Quiz]:
     """
     Create and save quizzes from a directory of files.
@@ -115,19 +116,25 @@ def create_and_save_quizzes_from_directory(
             break
     for quiz in quizzes:
         quiz.save()
+        if upload_to_db:
+            quiz.upload_to_db()
     return quizzes
 
 
-if __name__ == "__main__":
-    test_file = constants.CLEANED_EMAIL_DATA_DIR / "Morning_Brew__2025-10-16___In_a_jam__199ec791b7c1dd7b.json"
 
-    quiz = create_quiz(test_file, generator_type="openai")
-    # Save quiz to file (defaults to HTML)
-    if quiz is not None:
-        quiz.save()
+if __name__ == "__main__":
+    # test_file = constants.CLEANED_EMAIL_DATA_DIR / "Morning_Brew__2025-10-16___In_a_jam__199ec791b7c1dd7b.json"
+
+    # quiz = create_quiz(test_file, generator_type="openai")
+    # # Save quiz to file (defaults to HTML)
+    # if quiz is not None:
+    #     quiz.save()
+    #     # Test uploading to DB
+    #     quiz.upload_to_db()
     
     quizzes = create_and_save_quizzes_from_directory(constants.CLEANED_EMAIL_DATA_DIR, 
         max_quizzes=5,
-     generator_type="openai")
+        generator_type="openai",
+        upload_to_db=True)
 
     default_logger.info('Done')
