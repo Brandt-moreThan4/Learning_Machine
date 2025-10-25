@@ -11,7 +11,7 @@ from logging_config import default_logger
 
 
 def create_quiz(
-    file_path: Path, 
+    source: models.CleanedEmail, 
     generator_type: str = "local_llm",
     generator: Optional[Union[LocalLLMGenerator, OpenAIGenerator]] = None
 ) -> Quiz:
@@ -19,17 +19,14 @@ def create_quiz(
     Create a quiz from an email file.
     
     Args:
-        file_path: Path to the cleaned email JSON file
         generator_type: Type of generator to use ("local_llm" or "openai")
         generator: Optional pre-configured generator instance
         
     Returns:
         Quiz object containing the generated questions
     """
-    with open(file_path, "r", encoding="utf-8") as f:
-        email_data = json.load(f)
 
-    source_text = email_data['email_content']
+    source_text = source.email_content
     prompt = prompts.DEFAULT_PROMPT.format(source=source_text, n=5)
 
     # Use provided generator or create one based on type
@@ -46,9 +43,9 @@ def create_quiz(
 
     # Process the quiz_data to create Quiz and Question objects
     if quiz_data is not None:
-        quiz = Quiz.from_quiz_data_dict(quiz_data, file_path)
+        quiz = Quiz.from_quiz_data_dict(quiz_data, source)
     else:
-        quiz = Quiz([], file_path)  # Return empty quiz on failure
+        quiz = Quiz([], source)  # Return empty quiz on failure
     return quiz
 
 
@@ -156,7 +153,7 @@ def create_new_quizzes(max_quiz_count:int=5):
             continue
 
         default_logger.info(f"Creating quiz for email: {email}")
-        quiz = create_quiz(email.input_file, generator_type="openai")
+        quiz = create_quiz(email, generator_type="openai")
         quizzes.append(quiz)
         quiz.save_json()
         quiz.save_html()

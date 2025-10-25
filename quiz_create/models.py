@@ -15,6 +15,47 @@ import datetime
 import constants
 from database.db_connect import create_db_connection
 
+
+
+class CleanedEmail:
+    """Container for email content and metadata."""
+    
+    def __init__(self, input_file:Path):
+
+        self.input_file = input_file
+
+        # The file name should give us some info about the email
+        file_meta_data = self.input_file.stem.split("__")
+        self.sender = file_meta_data[0]
+        self.date = datetime.datetime.strptime(file_meta_data[1], "%Y-%m-%d").date()
+        self.subject = file_meta_data[2]
+        self.drive_id = file_meta_data[-1]
+
+    @property
+    def full_name(self) -> str:
+        """Return full name of the email (sender and subject)."""
+        return f"{self.sender} - {self.subject} - {self.date.isoformat()}"
+
+    def __str__(self):
+        return f"CleanedEmail(sender={self.sender}, date={self.date}, subject={self.subject})"
+    
+    def __repr__(self):
+        return self.__str__()
+
+    @property
+    def email_content(self) -> str:
+        """Return the email content."""
+        # Making this a property so it is only loaded when needed
+        with open(self.input_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        content = data.get("email_content")
+        if content is None:
+            default_logger.warning(f"No email content found in file: {self.input_file}")
+            raise Exception(f"No email content found for file: {self.input_file}")
+
+        return content
+
 class Question(ABC):
     """Base class for all question types."""
     
@@ -98,9 +139,12 @@ class ShortAnswerQuestion(Question):
 class Quiz:
     """Container for quiz questions and metadata."""
     
-    def __init__(self, questions: List[Question]):
+
+    def __init__(self, questions: List[Question], source: CleanedEmail):
         self.questions = questions
+        self.source = source
         self._template_env = None
+        self.title = source.full_name
     
     @property
     def num_questions(self) -> int:
@@ -111,6 +155,9 @@ class Quiz:
     def empty(self) -> bool:
         """Check if quiz is empty."""
         return self.num_questions == 0
+    
+    def __repr__(self):
+        return f"Quiz(title={self.title}, num_questions={self.num_questions})"
 
     @property
     def template_env(self):
@@ -122,7 +169,7 @@ class Quiz:
         return self._template_env
     
     @classmethod
-    def from_quiz_data_dict(cls, quiz_data: List[dict]) -> 'Quiz':
+    def from_quiz_data_dict(cls, quiz_data: List[dict], source: CleanedEmail) -> 'Quiz':
         """Create Quiz from list of question dictionaries."""
         questions = []
         for q_data in quiz_data:
@@ -169,7 +216,7 @@ class Quiz:
             
             questions.append(question)
         
-        return cls(questions)
+        return cls(questions,source)
     
     
     
@@ -194,7 +241,7 @@ class Quiz:
     def save_json(self) -> Path:
         """Save quiz to JSON file."""
         
-        input_stem = self.input_file.stem
+        input_stem = self.source.input_file.stem
         output_file = constants.QUIZ_JSON_DIR / f"{input_stem}_quiz.json"
         
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -227,6 +274,10 @@ class Quiz:
     def as_dict(self) -> dict:
     
         return {
+            "title": self.title,
+            "date_created": datetime.datetime.now().isoformat(),
+            "source_date" : self.source.date.isoformat(),
+            "source_sender": self.source.sender,
             "num_questions": self.num_questions,
             "questions": [question.as_dict() for question in self.questions]
         }
@@ -266,34 +317,3 @@ class Quiz:
         default_logger.info(f"Quiz uploaded to database with ID: {quiz_id}")
         return quiz_id
 
-
-class CleanedEmail:
-    """Container for email content and metadata."""
-    
-    def __init__(self, input_file:Path):
-
-        self.input_file = input_file
-
-        # The file name should give us some info about the email
-        file_meta_data = self.input_file.stem.split("__")
-        self.sender = file_meta_data[0]
-        self.date = datetime.datetime.strptime(file_meta_data[1], "%Y-%m-%d").date()
-        self.subject = file_meta_data[2]
-        self.drive_id = file_meta_data[-1]
-
-    def __str__(self):
-        return f"CleanedEmail(sender={self.sender}, date={self.date}, subject={self.subject})"
-    
-    def __repr__(self):
-        return self.__str__()
-
-    @property
-    def email_content(self) -> str:
-        """Return the email content."""
-        # Making this a property so it is only loaded when needed
-        with open(self.input_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        self.email_content = data['email_content']
-    
-    
