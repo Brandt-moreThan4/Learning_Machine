@@ -229,7 +229,7 @@ class Quiz:
     def save_html(self) -> Path:
         """Save quiz to HTML file."""
         
-        input_stem = self.input_file.stem
+        input_stem = self.source.input_file.stem
         output_file = constants.QUIZ_HTML_DIR / f"{input_stem}_quiz.html"
         
         with open(output_file, 'w', encoding='utf-8') as f:

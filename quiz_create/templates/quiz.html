@@ -3,7 +3,7 @@
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Quiz: {{ quiz.input_file.stem }}</title>
+    <title>{{ quiz.title }}</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         .header { background-color: #f4f4f4; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
@@ -16,20 +16,32 @@
         .answers-section { margin-top: 40px; padding: 20px; background-color: #f9f9f9; border-radius: 5px; }
         .answer-item { margin-bottom: 20px; padding: 15px; background-color: white; border-radius: 3px; border-left: 4px solid #007acc; }
         .answer-item h3 { margin-top: 0; color: #007acc; }
+        .question-type { display: inline-block; background-color: #007acc; color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.8em; margin-left: 10px; }
+        .cloze-instruction, .short-answer-instruction { background-color: #fff3cd; padding: 10px; border-radius: 3px; margin: 10px 0; border-left: 4px solid #ffc107; }
+        .source-info { color: #666; font-size: 0.9em; }
+        .quiz-stats { display: flex; gap: 20px; margin-top: 10px; }
+        .quiz-stats span { background-color: #e9ecef; padding: 5px 10px; border-radius: 3px; }
     </style>
 </head>
 <body>
     <div class='header'>
-        <h1>Quiz: {{ quiz.input_file.stem }}</h1>
-        <p><em>Generated from: {{ quiz.input_file.name }}</em></p>
+        <h1>{{ quiz.title }}</h1>
+        <div class='source-info'>
+            <p><strong>Source:</strong> {{ quiz.source.sender }} - {{ quiz.source.date.strftime('%Y-%m-%d') }}</p>
+            <p><strong>Subject:</strong> {{ quiz.source.subject }}</p>
+        </div>
+        <div class='quiz-stats'>
+            <span><strong>Questions:</strong> {{ quiz.num_questions }}</span>
+            <span><strong>Date Created:</strong> {{ quiz.source.date.strftime('%B %d, %Y') }}</span>
+        </div>
     </div>
     
     {% for question in quiz.questions %}
     <div class='question'>
-        <h2>Question {{ loop.index }}</h2>
+        <h2>Question {{ loop.index }} <span class='question-type'>{{ question.question_type.upper() }}</span></h2>
         <p>{{ question.question }}</p>
         
-        {% if question.__class__.__name__ == 'MCQQuestion' %}
+        {% if question.question_type == 'mcq' %}
         <div class='options'>
             <p><strong>Options:</strong></p>
             <ol>
@@ -38,7 +50,26 @@
                 {% endfor %}
             </ol>
         </div>
+        {% elif question.question_type == 'tf' %}
+        <div class='options'>
+            <p><strong>Options:</strong></p>
+            <ol>
+                {% for option in question.shuffled_options %}
+                <li>{{ option }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% elif question.question_type == 'cloze' %}
+        <div class='cloze-instruction'>
+            <p><em>Fill in the blank with the correct answer.</em></p>
+        </div>
+        {% elif question.question_type == 'short' %}
+        <div class='short-answer-instruction'>
+            <p><em>Provide a brief written answer.</em></p>
+        </div>
         {% endif %}
+        
+        <p class='difficulty'>Difficulty: {{ question.difficulty.title() }}</p>
     </div>
     {% endfor %}
     
@@ -46,11 +77,15 @@
         <h2>Answers</h2>
         {% for question in quiz.questions %}
         <div class='answer-item'>
-            <h3>Question {{ loop.index }}</h3>
+            <h3>Question {{ loop.index }} <span class='question-type'>{{ question.question_type.upper() }}</span></h3>
             <p><strong>Question:</strong> {{ question.question }}</p>
-            <p><strong>Answer:</strong> {{ question.answer }}</p>
+            <div class='answer'>
+                <strong>Answer:</strong> {{ question.answer }}
+            </div>
+            <div class='justification'>
+                <strong>Justification:</strong> {{ question.justification_span }}
+            </div>
             <p><strong>Difficulty:</strong> {{ question.difficulty.title() }}</p>
-            <p><strong>Justification:</strong> {{ question.justification_span }}</p>
         </div>
         {% endfor %}
     </div>
