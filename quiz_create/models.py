@@ -140,12 +140,23 @@ class Quiz:
     """Container for quiz questions and metadata."""
     
 
-    def __init__(self, questions: List[Question], source: CleanedEmail):
+    def __init__(self, questions: List[Question], source: CleanedEmail=None):
         self.questions = questions
         self.source = source
         self._template_env = None
-        self.title = source.full_name
-    
+
+        # Source File ID
+        # Source may be None if quiz is created without email context?
+        # Title should always be populated. 
+
+        if source:
+            self.title = source.full_name
+        else:
+            self.title = "Untitled Quiz"
+
+        # Source Path
+        self.source_path = source.input_file
+
     @property
     def num_questions(self) -> int:
         """Number of questions in the quiz."""
@@ -219,6 +230,14 @@ class Quiz:
         return cls(questions,source)
     
     
+    @classmethod
+    def from_cleaned_json(cls, json_data: dict) -> 'Quiz':
+        """Create Quiz from cleaned JSON data."""
+        source_file = Path(json_data['source_input_path'])
+        source = CleanedEmail(input_file=source_file)
+        quiz_data = json_data['questions']
+        return cls.from_quiz_data_dict(quiz_data, source)  
+
     
     def as_html(self) -> str:
         """Convert quiz to HTML format using template."""
@@ -278,6 +297,7 @@ class Quiz:
             "date_created": datetime.datetime.now().isoformat(),
             "source_date" : self.source.date.isoformat(),
             "source_sender": self.source.sender,
+            "source_input_path" : str(self.source.input_file),
             "num_questions": self.num_questions,
             "questions": [question.as_dict() for question in self.questions]
         }

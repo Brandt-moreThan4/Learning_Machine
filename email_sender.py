@@ -1,3 +1,4 @@
+import json
 import os
 import smtplib, ssl
 from email.mime.text import MIMEText
@@ -6,7 +7,7 @@ from pathlib import Path
 import os, smtplib, ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-# from quiz_create import models
+from quiz_create import models
 
 
 
@@ -37,9 +38,13 @@ def send_email(subject: str, html_body: str, to_email: str = "brandtgreen97@gmai
 if __name__ == "__main__":
 
     file = r'C:\Users\BrandtGreen\Desktop\Code\Learning_Machine\data\quizzes\quiz_html\Money_Stuff__2025-10-23__Money_Stuff_The_FBI_Found_Some_Insider_Betting__19a1254f13936902_quiz.html'
+    json_file = r'C:\Users\BrandtGreen\Desktop\Code\Learning_Machine\data\quizzes\quiz_json\Money_Stuff__2025-10-23__Money_Stuff_The_FBI_Found_Some_Insider_Betting__19a1254f13936902_quiz.json'
+    with open(json_file, "r", encoding="utf-8") as f:
+        quiz_data = json.load(f)
+    quiz = models.Quiz.from_cleaned_json(quiz_data)
     with open(file, "r", encoding="utf-8") as f:
         quiz_content = f.read()
     
-    send_email(subject="First Quiz Sending Test!", html_body=quiz_content)
+    send_email(subject="First Quiz Sending Test!", html_body=quiz.as_html())
 
     print('Emails sent!')
