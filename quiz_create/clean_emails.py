@@ -5,10 +5,8 @@ import json
 
 
 # To Do
-# Save as json with metadata
 # Strip out footers?
-# Store only unique id as file name?
-
+# Only clean latest emails...
 
 def clean_emails():
 

@@ -10,6 +10,9 @@ import json
 from sqlalchemy import text
 from sqlalchemy import text, bindparam
 from sqlalchemy.dialects.postgresql import JSONB
+import datetime
+
+import constants
 from database.db_connect import create_db_connection
 
 class Question(ABC):
@@ -178,16 +181,26 @@ class Quiz:
     
     def save_html(self) -> Path:
         """Save quiz to HTML file."""
-        import constants
-        constants.QUIZ_OUTPUT_DIR.mkdir(exist_ok=True)
         
         input_stem = self.input_file.stem
-        output_file = constants.QUIZ_OUTPUT_DIR / f"{input_stem}_quiz.html"
+        output_file = constants.QUIZ_HTML_DIR / f"{input_stem}_quiz.html"
         
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(self.as_html())
         
         default_logger.info(f"Quiz saved to: {output_file}")
+        return output_file
+    
+    def save_json(self) -> Path:
+        """Save quiz to JSON file."""
+        
+        input_stem = self.input_file.stem
+        output_file = constants.QUIZ_JSON_DIR / f"{input_stem}_quiz.json"
+        
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(self.as_json())
+        
+        default_logger.info(f"Quiz JSON saved to: {output_file}")
         return output_file
     
     def save(self, format_type: str = "html") -> Path:
@@ -254,25 +267,33 @@ class Quiz:
         return quiz_id
 
 
-class EmailContent:
+class CleanedEmail:
     """Container for email content and metadata."""
     
     def __init__(self, input_file:Path):
-        self.raw_input_file = input_file
+
+        self.input_file = input_file
 
         # The file name should give us some info about the email
-        file_meta_data = self.raw_input_file.stem.split("__")
+        file_meta_data = self.input_file.stem.split("__")
         self.sender = file_meta_data[0]
-        self.date = file_meta_data[1]
+        self.date = datetime.datetime.strptime(file_meta_data[1], "%Y-%m-%d").date()
         self.subject = file_meta_data[2]
         self.drive_id = file_meta_data[-1]
-        
+
+    def __str__(self):
+        return f"CleanedEmail(sender={self.sender}, date={self.date}, subject={self.subject})"
     
-    def as_dict(self) -> dict:
-        return {
-            "sender": self.sender,
-            "date": self.date,
-            "subject": self.subject,
-            "drive_id": self.drive_id,
-        }
+    def __repr__(self):
+        return self.__str__()
+
+    @property
+    def email_content(self) -> str:
+        """Return the email content."""
+        # Making this a property so it is only loaded when needed
+        with open(self.input_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        self.email_content = data['email_content']
+    
     

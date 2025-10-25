@@ -4,10 +4,10 @@ import json
 from typing import Optional, Union, List
 
 from quiz_create.models import Quiz
+from quiz_create import models
 from quiz_create.generators import LocalLLMGenerator, OpenAIGenerator
 from quiz_create.generators import prompts
 from logging_config import default_logger
-
 
 
 def create_quiz(
@@ -121,6 +121,49 @@ def create_and_save_quizzes_from_directory(
     return quizzes
 
 
+def quiz_already_exists(quiz_id: str) -> bool:
+
+    for quiz_file in constants.QUIZ_JSON_DIR.glob("*.json"):
+        if quiz_id in quiz_file.stem:
+            return True
+
+def is_emails_to_skip(email: models.CleanedEmail) -> bool:
+    # Kind of a placeholder to filter out certain emails we don't want quizes on
+
+    if 'podcast' in  email.subject.lower():
+        return True
+    return False
+
+def create_new_quizzes(max_quiz_count:int=5):
+
+    # Look in the cleaned email directory and find some quizzes to create
+    all_cleaned_email_files = constants.CLEANED_EMAIL_DATA_DIR.glob("*.json")
+    cleaned_emails = [models.CleanedEmail(file_path) for file_path in all_cleaned_email_files]
+    
+    # Sort by date, newest first
+    cleaned_emails.sort(key=lambda x: x.date, reverse=True)
+
+    quizzes = []
+    quizzes_created = 0
+    for email in cleaned_emails:
+
+        if quiz_already_exists(email.drive_id):
+            default_logger.info(f"Quiz already exists for email: {email}, skipping.")
+            continue
+
+        if is_emails_to_skip(email):
+            default_logger.info(f"Skipping email: {email} .")
+            continue
+
+        default_logger.info(f"Creating quiz for email: {email}")
+        quiz = create_quiz(email.input_file, generator_type="openai")
+        quizzes.append(quiz)
+        quiz.save_json()
+        quiz.save_html()
+        # quiz.upload_to_db()
+        quizzes_created += 1
+        if quizzes_created >= max_quiz_count:
+            break
 
 if __name__ == "__main__":
     # test_file = constants.CLEANED_EMAIL_DATA_DIR / "Morning_Brew__2025-10-16___In_a_jam__199ec791b7c1dd7b.json"
