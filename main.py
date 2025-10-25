@@ -24,6 +24,8 @@ def main():
     # Create quizzes from cleaned emails
     default_logger.info("Creating quizzes from cleaned emails...")
     create_quiz.create_new_quizzes(max_quiz_count=3)
+
+    # Email quizzes
     
     default_logger.info("Pipeline completed successfully!")
 
