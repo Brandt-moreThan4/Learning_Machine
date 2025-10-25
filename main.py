@@ -19,6 +19,10 @@ def main():
     # Clean downloaded emails
     default_logger.info("Cleaning downloaded emails...")
     ce.clean_emails()
+
+    # Create quizzes from cleaned emails
+    default_logger.info("Creating quizzes from cleaned emails...")
+    
     
     default_logger.info("Pipeline completed successfully!")
 

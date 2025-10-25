@@ -10,7 +10,7 @@ import json
 from sqlalchemy import text
 from sqlalchemy import text, bindparam
 from sqlalchemy.dialects.postgresql import JSONB
-from db_connect import create_db_connection
+from database.db_connect import create_db_connection
 
 class Question(ABC):
     """Base class for all question types."""
@@ -95,9 +95,8 @@ class ShortAnswerQuestion(Question):
 class Quiz:
     """Container for quiz questions and metadata."""
     
-    def __init__(self, questions: List[Question], input_file: Path):
+    def __init__(self, questions: List[Question]):
         self.questions = questions
-        self.input_file = input_file
         self._template_env = None
     
     @property
@@ -120,7 +119,7 @@ class Quiz:
         return self._template_env
     
     @classmethod
-    def from_quiz_data_dict(cls, quiz_data: List[dict], input_file: Path) -> 'Quiz':
+    def from_quiz_data_dict(cls, quiz_data: List[dict]) -> 'Quiz':
         """Create Quiz from list of question dictionaries."""
         questions = []
         for q_data in quiz_data:
@@ -167,7 +166,7 @@ class Quiz:
             
             questions.append(question)
         
-        return cls(questions, input_file)
+        return cls(questions)
     
     
     
@@ -202,18 +201,19 @@ class Quiz:
         
         if format_type == "html":
             return self.save_html()
-        elif format_type == "markdown":
-            return self.save_markdown()
-        elif format_type == "txt":
-            return self.save_txt()
         else:
             default_logger.warning(f"Unknown format '{format_type}', defaulting to HTML")
             return self.save_html()
+    
+    def as_json(self) -> str:
+        """Convert quiz to JSON string."""
+        quiz_dict = self.as_dict()
+        quiz_json = json.dumps(quiz_dict, indent=2)
+        return quiz_json
 
     def as_dict(self) -> dict:
     
         return {
-            "input_file": str(self.input_file),
             "num_questions": self.num_questions,
             "questions": [question.as_dict() for question in self.questions]
         }
@@ -252,3 +252,27 @@ class Quiz:
         
         default_logger.info(f"Quiz uploaded to database with ID: {quiz_id}")
         return quiz_id
+
+
+class EmailContent:
+    """Container for email content and metadata."""
+    
+    def __init__(self, input_file:Path):
+        self.raw_input_file = input_file
+
+        # The file name should give us some info about the email
+        file_meta_data = self.raw_input_file.stem.split("__")
+        self.sender = file_meta_data[0]
+        self.date = file_meta_data[1]
+        self.subject = file_meta_data[2]
+        self.drive_id = file_meta_data[-1]
+        
+    
+    def as_dict(self) -> dict:
+        return {
+            "sender": self.sender,
+            "date": self.date,
+            "subject": self.subject,
+            "drive_id": self.drive_id,
+        }
+    
