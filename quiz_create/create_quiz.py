@@ -156,8 +156,8 @@ def create_new_quizzes(max_quiz_count:int=5):
         quiz = create_quiz(email, generator_type="openai")
         quizzes.append(quiz)
         quiz.save_json()
-        quiz.save_html()
-        # quiz.upload_to_db()
+        # quiz.save_html()
+        quiz.upload_to_db()
         quizzes_created += 1
         if quizzes_created >= max_quiz_count:
             break

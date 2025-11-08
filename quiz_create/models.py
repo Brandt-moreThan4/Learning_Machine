@@ -11,10 +11,11 @@ from sqlalchemy import text
 from sqlalchemy import text, bindparam
 from sqlalchemy.dialects.postgresql import JSONB
 import datetime
+import pandas as pd
 
 import constants
 from database.db_connect import create_db_connection
-
+from database import db_utils
 
 
 class CleanedEmail:
@@ -156,6 +157,12 @@ class Quiz:
 
         # Source Path
         self.source_path = source.input_file
+
+    @property
+    def quiz_id(self) -> str:
+        """Unique identifier for the quiz based on source file."""
+        return ''
+        
 
     @property
     def num_questions(self) -> int:
@@ -313,7 +320,6 @@ class Quiz:
             Exception: If database connection or upload fails
         """
 
-        
 
         # Create database connection
         engine = create_db_connection()
@@ -336,4 +342,16 @@ class Quiz:
         
         default_logger.info(f"Quiz uploaded to database with ID: {quiz_id}")
         return quiz_id
+
+    def exists_in_db(self) -> bool:
+        """
+        Check if the quiz already exists in the database based on source path.
+        
+        Returns:
+            bool: True if quiz exists, False otherwise
+        """
+
+        all_quiz_ids = db_utils.get_quiz_ids_from_db()
+        
+
 
