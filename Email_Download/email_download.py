@@ -16,7 +16,7 @@ from googleapiclient.http import MediaIoBaseDownload
 
 sys.path.append(str(Path(__file__).parent.parent))
 import constants
-from logging_config import default_logger, setup_logging
+from utils import default_logger, setup_logging
 
 # Initialize logging
 setup_logging()

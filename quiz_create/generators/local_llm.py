@@ -81,7 +81,7 @@ if __name__ == "__main__":
     )
     end_time = time.time()
     
-    from logging_config import default_logger
+    from utils import default_logger
     default_logger.info(f"Generation took {end_time - start_time:.2f} seconds")
     default_logger.info(response['response'])
     default_logger.info('Done!')

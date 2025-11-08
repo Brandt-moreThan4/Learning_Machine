@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Literal
 from pathlib import Path
 import random
-from logging_config import default_logger
+from utils import default_logger
 import json
 from sqlalchemy import text
 from sqlalchemy import text, bindparam

@@ -7,7 +7,7 @@ from quiz_create.models import Quiz
 from quiz_create import models
 from quiz_create.generators import LocalLLMGenerator, OpenAIGenerator
 from quiz_create.generators import prompts
-from logging_config import default_logger
+from utils import default_logger
 
 
 def create_quiz(
