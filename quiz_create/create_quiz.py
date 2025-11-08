@@ -118,7 +118,7 @@ def create_and_save_quizzes_from_directory(
     return quizzes
 
 
-def quiz_already_exists(quiz_id: str) -> bool:
+def quiz_exists_locally(quiz_id: str) -> bool:
 
     for quiz_file in constants.QUIZ_JSON_DIR.glob("*.json"):
         if quiz_id in quiz_file.stem:
@@ -131,7 +131,10 @@ def is_emails_to_skip(email: models.CleanedEmail) -> bool:
         return True
     return False
 
+
 def create_new_quizzes(max_quiz_count:int=5):
+    # Need to refine the logic a bit to create or not create quiz...
+
 
     # Look in the cleaned email directory and find some quizzes to create
     all_cleaned_email_files = constants.CLEANED_EMAIL_DATA_DIR.glob("*.json")
@@ -144,20 +147,28 @@ def create_new_quizzes(max_quiz_count:int=5):
     quizzes_created = 0
     for email in cleaned_emails:
 
-        if quiz_already_exists(email.drive_id):
-            default_logger.info(f"Quiz already exists for email: {email}, skipping.")
-            continue
 
         if is_emails_to_skip(email):
             default_logger.info(f"Skipping email: {email} .")
+            continue
+
+        if quiz_exists_locally(email.drive_id):
+            default_logger.info(f"Quiz already exists for email: {email}, skipping.")
             continue
 
         default_logger.info(f"Creating quiz for email: {email}")
         quiz = create_quiz(email, generator_type="openai")
         quizzes.append(quiz)
         quiz.save_json()
+
         # quiz.save_html()
+
+        if quiz.exists_in_db():
+            default_logger.info(f"Quiz already exists in DB for email: {email}, skipping.")
+            continue        
+        
         quiz.upload_to_db()
+
         quizzes_created += 1
         if quizzes_created >= max_quiz_count:
             break

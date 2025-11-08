@@ -21,11 +21,9 @@ def main():
     default_logger.info("Cleaning downloaded emails...")
     ce.clean_emails()
 
-    # Create quizzes from cleaned emails
+    # Create quizzes from cleaned emails (Also saves to DB)
     default_logger.info("Creating quizzes from cleaned emails...")
     create_quiz.create_new_quizzes(max_quiz_count=10)
-
-    # Save quizzes to DB?
 
     # Email quizzes
     

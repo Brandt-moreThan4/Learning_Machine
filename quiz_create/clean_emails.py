@@ -28,6 +28,7 @@ def clean_emails():
         data['sender'] = file_meta_data[0]
         data['date'] = file_meta_data[1]
         data['subject'] = file_meta_data[2]
+        data['drive_id'] = file_meta_data[-1]
         data['word'] = len(cleaned_text.split())
         data['email_content'] = cleaned_text
 

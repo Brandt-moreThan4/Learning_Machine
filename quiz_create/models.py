@@ -161,8 +161,9 @@ class Quiz:
     @property
     def quiz_id(self) -> str:
         """Unique identifier for the quiz based on source file."""
-        return ''
-        
+        if self.source is not None:
+            return self.source.drive_id
+        return None
 
     @property
     def num_questions(self) -> int:
@@ -309,7 +310,7 @@ class Quiz:
             "questions": [question.as_dict() for question in self.questions]
         }
 
-    def upload_to_db(self) -> int:
+    def upload_to_db(self):
         """
         Upload quiz to database and return the quiz ID.
         
@@ -326,22 +327,18 @@ class Quiz:
         
         # Convert quiz to dictionary format for JSON storage
         quiz_data = self.as_dict()
-
+        drive_id = self.source.drive_id
 
         with engine.connect() as conn:
             stmt = text("""
-                INSERT INTO quiz_app.quizzes (data)
-                VALUES (:quiz_data)
+                INSERT INTO quiz_app.quizzes (id, data)
+                VALUES (:drive_id, :quiz_data)
                 RETURNING id
             """).bindparams(bindparam("quiz_data", type_=JSONB))
 
-            result = conn.execute(stmt, {"quiz_data": quiz_data})  # quiz_data is a dict
-            quiz_id = result.scalar_one()
+            result = conn.execute(stmt, {"drive_id": drive_id, "quiz_data": quiz_data})  # quiz_data is a dict
             conn.commit()        
 
-        
-        default_logger.info(f"Quiz uploaded to database with ID: {quiz_id}")
-        return quiz_id
 
     def exists_in_db(self) -> bool:
         """
@@ -352,6 +349,7 @@ class Quiz:
         """
 
         all_quiz_ids = db_utils.get_quiz_ids_from_db()
+        return self.quiz_id in all_quiz_ids
         
 
 
