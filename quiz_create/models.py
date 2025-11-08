@@ -351,5 +351,44 @@ class Quiz:
         all_quiz_ids = db_utils.get_quiz_ids_from_db()
         return self.quiz_id in all_quiz_ids
         
+    def get_unsent_quizzes_from_db() -> List['Quiz']:
+        """
+        Retrieve quizzes from the database that have not been emailed yet.
+        
+        Returns:
+            List[Quiz]: List of Quiz objects that have not been emailed
+        """
+
+        engine = create_db_connection()
+        unsent_quizzes = []
+
+        query = f""" select * from quiz_app.quizzes q
+                    where email_sent = False; """
+        
+        quiz_data_df = pd.read_sql_query(query, engine)
+
+        for row in quiz_data_df.itertuples(index=False):
+            quiz_data = row.data
+            quiz = Quiz.from_cleaned_json(quiz_data)
+            unsent_quizzes.append(quiz)
+
+        return unsent_quizzes
+    
+    def mark_as_emailed_in_db(self):
+        """
+        Mark the quiz as emailed in the database.
+        """
+
+        engine = create_db_connection()
+
+        with engine.connect() as conn:
+            stmt = text("""
+                UPDATE quiz_app.quizzes
+                SET email_sent = TRUE
+                WHERE id = :drive_id
+            """)
+
+            conn.execute(stmt, {"drive_id": self.quiz_id})
+            conn.commit()
 
 

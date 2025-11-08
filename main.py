@@ -3,6 +3,7 @@ from quiz_create import clean_emails as ce
 import utils
 from utils import setup_logging, default_logger
 from quiz_create import create_quiz
+import email_sender
 
 # Set up logging
 setup_logging()
@@ -26,6 +27,8 @@ def main():
     create_quiz.create_new_quizzes(max_quiz_count=10)
 
     # Email quizzes
+    default_logger.info("Sending new quiz emails...")
+    email_sender.send_new_quiz_emails()
     
     default_logger.info("Pipeline completed successfully!")
 

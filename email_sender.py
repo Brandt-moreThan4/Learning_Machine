@@ -34,17 +34,38 @@ def send_email(subject: str, html_body: str, to_email: str = "brandtgreen97@gmai
         server.sendmail(from_email, [to_email], msg.as_string())
 
 
+def send_new_quiz_emails(max_emails_to_send:int=5):
+
+    # Query the database for quizzes that have not been emailed yet
+    not_sent_quizzes = models.Quiz.get_unsent_quizzes_from_db()
+
+    # Send them
+    emails_sent = 0
+    for quiz in not_sent_quizzes:
+        if emails_sent >= max_emails_to_send:
+            break   
+        
+        send_email(
+            subject=f"New Quiz Available: {quiz.source.subject}",
+            html_body=quiz.as_html()
+        )
+        emails_sent += 1
+        # If email sent successfully, mark quiz as emailed in DB
+        quiz.mark_as_emailed_in_db()
+
 
 if __name__ == "__main__":
 
-    file = r'C:\Users\BrandtGreen\Desktop\Code\Learning_Machine\data\quizzes\quiz_html\Money_Stuff__2025-10-23__Money_Stuff_The_FBI_Found_Some_Insider_Betting__19a1254f13936902_quiz.html'
-    json_file = r'C:\Users\BrandtGreen\Desktop\Code\Learning_Machine\data\quizzes\quiz_json\Money_Stuff__2025-10-23__Money_Stuff_The_FBI_Found_Some_Insider_Betting__19a1254f13936902_quiz.json'
-    with open(json_file, "r", encoding="utf-8") as f:
-        quiz_data = json.load(f)
-    quiz = models.Quiz.from_cleaned_json(quiz_data)
-    with open(file, "r", encoding="utf-8") as f:
-        quiz_content = f.read()
+    # file = r'C:\Users\BrandtGreen\Desktop\Code\Learning_Machine\data\quizzes\quiz_html\Money_Stuff__2025-10-23__Money_Stuff_The_FBI_Found_Some_Insider_Betting__19a1254f13936902_quiz.html'
+    # json_file = r'C:\Users\BrandtGreen\Desktop\Code\Learning_Machine\data\quizzes\quiz_json\Money_Stuff__2025-10-23__Money_Stuff_The_FBI_Found_Some_Insider_Betting__19a1254f13936902_quiz.json'
+    # with open(json_file, "r", encoding="utf-8") as f:
+    #     quiz_data = json.load(f)
+    # quiz = models.Quiz.from_cleaned_json(quiz_data)
+    # with open(file, "r", encoding="utf-8") as f:
+    #     quiz_content = f.read()
     
-    send_email(subject="First Quiz Sending Test!", html_body=quiz.as_html())
+    # send_email(subject="First Quiz Sending Test!", html_body=quiz.as_html())
+
+    send_new_quiz_emails()
 
     print('Emails sent!')
