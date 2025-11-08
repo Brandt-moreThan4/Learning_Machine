@@ -144,9 +144,12 @@ def create_new_quizzes(max_quiz_count:int=5):
     cleaned_emails.sort(key=lambda x: x.date, reverse=True)
 
     quizzes = []
-    quizzes_created = 0
+    quizzes_looked_at = 0
     for email in cleaned_emails:
-
+        quizzes_looked_at += 1
+        
+        if quizzes_looked_at >= max_quiz_count:
+            break        
 
         if is_emails_to_skip(email):
             default_logger.info(f"Skipping email: {email} .")
@@ -169,9 +172,8 @@ def create_new_quizzes(max_quiz_count:int=5):
         
         quiz.upload_to_db()
 
-        quizzes_created += 1
-        if quizzes_created >= max_quiz_count:
-            break
+
+
 
 if __name__ == "__main__":
     # test_file = constants.CLEANED_EMAIL_DATA_DIR / "Morning_Brew__2025-10-16___In_a_jam__199ec791b7c1dd7b.json"
