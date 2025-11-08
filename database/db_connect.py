@@ -9,8 +9,20 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 
+# Module-level cached engine
+_engine = None
+
 def create_db_connection():
-    """Create and return a database connection engine with proper SSL support for Supabase."""
+    """Create and return a cached database connection engine with proper SSL support for Supabase.
+    
+    The engine is created once on first call and reused for all subsequent calls.
+    This is more efficient than creating a new engine each time.
+    """
+    global _engine
+    
+    # Return cached engine if it already exists
+    if _engine is not None:
+        return _engine
     
     # Load environment variables
     load_dotenv()
@@ -36,14 +48,14 @@ def create_db_connection():
     connection_string = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     
     # Create engine with SSL support (required for Supabase)
-    engine = create_engine(
+    _engine = create_engine(
         connection_string,
         connect_args={"sslmode": "require"},  # Required for Supabase
         pool_pre_ping=True,  # Verify connections before use
         pool_recycle=300     # Recycle connections every 5 minutes
     )
 
-    return engine
+    return _engine
 
 
 

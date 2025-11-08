@@ -6,7 +6,7 @@ import json
 
 # To Do
 # Strip out footers?
-# Only clean latest emails...
+# Only clean latest emails... Honestly, it's fine for now to clean everything. It's pretty quick. 
 
 def clean_emails():
 
@@ -20,6 +20,7 @@ def clean_emails():
         # Clean the html
         soup = BeautifulSoup(raw_html, "html.parser")
         cleaned_text = soup.get_text()
+
         # Collect some metadata based on file name. 
         # Example file name: Money_Stuff_2025-10-06_Money_Stuff_OpenAI_Is_Good_at_Deals_199ba92360bedc3e.html
         file_meta_data = raw_email_file.stem.split("__")

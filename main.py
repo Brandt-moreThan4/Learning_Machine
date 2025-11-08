@@ -23,7 +23,9 @@ def main():
 
     # Create quizzes from cleaned emails
     default_logger.info("Creating quizzes from cleaned emails...")
-    # create_quiz.create_new_quizzes(max_quiz_count=3)
+    create_quiz.create_new_quizzes(max_quiz_count=10)
+
+    # Save quizzes to DB?
 
     # Email quizzes
     
