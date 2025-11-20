@@ -58,29 +58,9 @@ def create_db_connection():
     return _engine
 
 
-
 if __name__ == "__main__":
     # Create database connection
     engine = create_db_connection()
-    
-    if engine is None:
-        print("\nCannot proceed without database connection.")
-        print("Please fix the connection issues and try again.")
-        exit(1)
-    
-    # Example: Query security_master tables
-    print("\nTesting database queries...")
-    
-    # Get available tables
-    tables_query = """
-    SELECT table_schema, table_name 
-    FROM information_schema.tables 
-    WHERE table_schema NOT IN ('information_schema', 'pg_catalog')
-    ORDER BY table_schema, table_name;
-    """
-    
-    tables = pd.read_sql(tables_query, engine)
-    if tables is not None:
-        print("Available tables:")
-        print(tables)
-    
+
+
+    print('Done!')

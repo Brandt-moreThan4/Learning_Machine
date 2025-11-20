@@ -1,12 +1,13 @@
 import email_download.email_download as ed
 from quiz_create import clean_emails as ce
 import utils
-from utils import setup_logging, default_logger
+from utils import default_logger
 from quiz_create import create_quiz
 import email_sender
+from database import db_utils
 
 # Set up logging
-setup_logging()
+utils.setup_logging()
 
 utils.create_necessary_dirs()
 
@@ -27,9 +28,13 @@ def main():
     create_quiz.create_new_quizzes(max_quiz_count=10)
 
     # Email quizzes
-    default_logger.info("Sending new quiz emails...")
-    email_sender.send_new_quiz_emails()
-    
+
+    if db_utils.db_connection_works():
+        default_logger.info("Sending new quiz emails...")
+        email_sender.send_new_quiz_emails()
+    else:
+        default_logger.error("Database connection failed. Skipping email sending.")
+
     default_logger.info("Pipeline completed successfully!")
 
 if __name__ == "__main__":

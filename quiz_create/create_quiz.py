@@ -124,7 +124,19 @@ def quiz_exists_locally(quiz_id: str) -> bool:
         if quiz_id in quiz_file.stem:
             return True
 
-def is_emails_to_skip(email: models.CleanedEmail) -> bool:
+def get_cleaned_quiz_by_id(quiz_id: str) -> Optional[models.Quiz]:
+    # Look for the quiz file in the cleaned quizzes directory
+    for quiz_file in constants.QUIZ_JSON_DIR.glob("*.json"):
+        if quiz_id in quiz_file.stem:
+            # Load the quiz from the JSON file
+            with open(quiz_file, "r", encoding="utf-8") as f:
+                quiz_data = json.load(f)
+            quiz = models.Quiz.from_cleaned_json(quiz_data)
+            return quiz
+    return None
+
+
+def is_email_to_skip(email: models.CleanedEmail) -> bool:
     # Kind of a placeholder to filter out certain emails we don't want quizes on
 
     if 'podcast' in  email.subject.lower():
@@ -151,26 +163,32 @@ def create_new_quizzes(max_quiz_count:int=5):
         if quizzes_looked_at >= max_quiz_count:
             break        
 
-        if is_emails_to_skip(email):
+        if is_email_to_skip(email):
             default_logger.info(f"Skipping email: {email} .")
             continue
 
-        if quiz_exists_locally(email.drive_id):
-            default_logger.info(f"Quiz already exists for email: {email}, skipping.")
-            continue
-
-        default_logger.info(f"Creating quiz for email: {email}")
-        quiz = create_quiz(email, generator_type="openai")
-        quizzes.append(quiz)
-        quiz.save_json()
-
-        # quiz.save_html()
-
-        if quiz.exists_in_db():
-            default_logger.info(f"Quiz already exists in DB for email: {email}, skipping.")
-            continue        
+        # Only create the quiz if it doesn't already exist locally.
+        if not quiz_exists_locally(email.drive_id):
+            default_logger.info(f"Creating quiz for email: {email}")
+            quiz = create_quiz(email, generator_type="openai")
+            quiz.save_json()
+            quizzes.append(quiz)
+        else:
+            default_logger.info(f"Quiz already exists locally for email: {email}, will just read it in.")
         
-        quiz.upload_to_db()
+            # Load existing quiz from Json (In case it needs to be uplaoded to Db in next step)
+            quiz = get_cleaned_quiz_by_id(email.drive_id)
+
+
+        # If necessary, upload to DB
+        if not quiz.exists_in_db():
+            default_logger.info(f"Uploading quiz to DB for email: {email}")
+            quiz.upload_to_db()
+        else:
+            default_logger.info(f"Quiz already exists in DB for email: {email}, skipping upload.")
+            continue
+        
+
 
 
 
