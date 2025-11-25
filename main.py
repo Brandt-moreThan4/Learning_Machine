@@ -14,10 +14,15 @@ utils.create_necessary_dirs()
 def main():
     default_logger.info("Starting Learning Machine pipeline...")
 
+    if not db_utils.db_connection_works():
+        default_logger.error("Database connection failed. Exiting pipeline.")
+        return
+
     # Download new emails
     default_logger.info("Downloading new emails...")
     downloader = ed.EmailDownloader()
     downloader.download_files(max_files=30)
+    
 
     # Clean downloaded emails
     default_logger.info("Cleaning downloaded emails...")
@@ -29,11 +34,8 @@ def main():
 
     # Email quizzes
 
-    if db_utils.db_connection_works():
-        default_logger.info("Sending new quiz emails...")
-        email_sender.send_new_quiz_emails()
-    else:
-        default_logger.error("Database connection failed. Skipping email sending.")
+    default_logger.info("Sending new quiz emails...")
+    email_sender.send_new_quiz_emails()
 
     default_logger.info("Pipeline completed successfully!")
 
